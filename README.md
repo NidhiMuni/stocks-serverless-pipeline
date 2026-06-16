@@ -102,5 +102,11 @@ aws lambda update-function-configuration \
 ```   
 
 ### getMoversData lambda function creation from AWS CLI
-Same basic lambda creation as above. 
+Same basic lambda creation and updates as above. 
+Test:
+```
+aws lambda invoke \
+  --function-name getMoversData \
+  output.json
+```
 
