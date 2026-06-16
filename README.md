@@ -110,3 +110,41 @@ aws lambda invoke \
   output.json
 ```
 
+### Add API Gateway
+```
+aws apigatewayv2 create-api \
+  --name movers-api \
+  --protocol-type HTTP
+
+aws apigatewayv2 create-integration \
+  --api-id cbvbq2ei92 \
+  --integration-type AWS_PROXY \
+  --integration-uri arn:aws:lambda:us-west-2:<ACCOUNT_ID>:function:getMoversData \
+  --payload-format-version 2.0
+
+aws apigatewayv2 create-route \
+  --api-id cbvbq2ei92 \
+  --route-key "GET /movers" \
+  --target integrations/<INTEGRATION ID>
+
+aws apigatewayv2 create-stage \
+  --api-id cbvbq2ei92 \
+  --stage-name prod \
+  --auto-deploy
+
+aws lambda add-permission \
+  --function-name getMoversData \
+  --statement-id apigateway-access \
+  --action lambda:InvokeFunction \
+  --principal apigateway.amazonaws.com \
+  --source-arn "arn:aws:execute-api:us-west-2:<ACCOUNT_ID>:cbvbq2ei92/*/*"
+```
+
+Test:
+
+```
+aws apigatewayv2 get-api \
+  --api-id cbvbq2ei92
+
+curl https://cbvbq2ei92.execute-api.us-west-2.amazonaws.com/prod/movers
+```

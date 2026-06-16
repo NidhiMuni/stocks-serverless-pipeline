@@ -34,4 +34,11 @@ def getMoversData_handler(event, context):
     dates = get_last_business_days(7)
     data = fetch_data(dates)
 
-    return data
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+        },
+        "body": json.dumps(data)
+    }
