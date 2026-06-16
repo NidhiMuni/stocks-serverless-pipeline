@@ -101,3 +101,6 @@ aws lambda update-function-configuration \
   --timeout 10 
 ```   
 
+### getMoversData lambda function creation from AWS CLI
+Same basic lambda creation as above. 
+
