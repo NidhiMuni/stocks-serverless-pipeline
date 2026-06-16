@@ -7,6 +7,8 @@ WATCHLIST = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
 BASE_URL = "https://api.massive.com/v1/open-close"
 
 secretsClient = boto3.client("secretsmanager")
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("StockChangeDailyData")
 
 # Get Massive API Key from AWS secrets manager 
 def get_secret():
@@ -22,9 +24,9 @@ def fetch_data(url):
         return json.loads(response.read().decode("utf-8"))
 
 # Iterate through tickers on the watch list, calculating the percent change from open to close. 
-# Return information for the stock with the highest absolute percent change.
+# Add to table information for the stock with the highest absolute percent change.
 def dailyTableUpdate_handler(event, context):
-    #TODO: more error handling & tests
+    #TODO: more error handling & tests, including rate limiting
 
     #TODO: For the final version, this will likely not be necessary, since this should take place for today's date
     date = event.get("date") 
@@ -58,4 +60,14 @@ def dailyTableUpdate_handler(event, context):
         except Exception as e:
             print(f"Error fetching {ticker}: {e}")
 
+    if best_stock:
+        table.put_item(
+            Item={
+                "date": best_stock["date"],
+                "ticker_symbol": best_stock["ticker_symbol"],
+                "percent_change": str(best_stock["percent_change"]),
+                "closing_price": str(best_stock["closing_price"])
+            }
+        )
+    
     return best_stock
