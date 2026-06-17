@@ -1,7 +1,8 @@
 import json
 import boto3
 import urllib.request
-
+from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 
 WATCHLIST = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
 BASE_URL = "https://api.massive.com/v1/open-close"
@@ -22,14 +23,28 @@ def get_secret():
 def fetch_data(url):
     with urllib.request.urlopen(url) as response:
         return json.loads(response.read().decode("utf-8"))
+    
+def get_target_date(event):
+    if event and event.get("date"):
+        return event["date"]
+
+    # Pacific Time (handles DST correctly)
+    pacific = ZoneInfo("America/Los_Angeles")
+    now_pt = datetime.now(pacific)
+
+    yesterday = now_pt - timedelta(days=1)
+    return yesterday.strftime("%Y-%m-%d")
 
 # Iterate through tickers on the watch list, calculating the percent change from open to close. 
 # Add to table information for the stock with the highest absolute percent change.
 def dailyTableUpdate_handler(event, context):
     #TODO: more error handling & tests, including rate limiting
+    date = get_target_date(event)
 
-    #TODO: For the final version, this will likely not be necessary, since this should take place for today's date
-    date = event.get("date") 
+    #This is not necessary for the cron event, however I am leaving it in in case I want to use it laster
+    if event and event.get("date"):
+        date = event.get("date") 
+
 
     best_stock = None
     best_change = 0
