@@ -1,7 +1,9 @@
 # Stocks Serverless Pipeline
 
+Creation and Deployment of resources from AWS CLI. 
 
-### dailyTableUpdate lambda function creation from AWS CLI
+### dailyTableUpdate lambda function 
+Creation
 ```
 aws configure
 ```
@@ -28,14 +30,14 @@ aws lambda create-function \
   --zip-file fileb://dailyTableUpdate_function.zip
 ```
 
-Test
+Testing:
 ``` 
 aws lambda invoke \
   --function-name dailyTableUpdate \
   output.json
 ```
 
-#### Update 2: Add business logic to calculate highest stock percentage
+#### Add business logic to calculate highest stock percentage
 To update Lambda function with new code:
 ```
 zip dailyTableUpdate_function.zip dailyTableUpdate_lambda.py
@@ -46,7 +48,7 @@ aws lambda update-function-code \
 
 ```
 
-Test:
+Testing:
 Update payload.json with a business day date in the format yyyy-mm-dd.
 ```
 aws lambda invoke \
@@ -67,8 +69,8 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/SecretsManagerReadWrite
 ```
 
-### DynamoDB
-Created table and access permissions. Because DynamoDB does not have a specific dateTime type, use a string in the format YYYY-MM-DD
+#### Add DynamoDB connection
+Created table and access permissions. Because DynamoDB does not have a specific dateTime type, we use a string in the format YYYY-MM-DD
 ```
 aws dynamodb create-table \
   --table-name StockChangeDailyData \
@@ -85,7 +87,7 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
 ```
 
-Test: Same as before table update was added. Uses this code to backfill a few days of data, and to ensure that the table does not add dupicate rows on queries with a repeated date, or dummy rows for non-business days which have no data. 
+Test: Same as before the table update code was added. I used this code to backfill a few days of data, and to test and ensure that the table does not add dupicate rows on queries with a repeated date, or add dummy rows for non-business days which have no data. 
 ```
 aws lambda invoke \
   --function-name dailyTableUpdate \
@@ -94,23 +96,25 @@ aws lambda invoke \
   response.json
 ```
 
-Changed the timeout from 3 to 10 seconds due to a Sandbox.Timedout error. (10 to be generous)
+I changed the timeout from 3 to 10 seconds due to a Sandbox.Timedout error. (10 to be generous)
 ```
 aws lambda update-function-configuration \
   --function-name dailyTableUpdate \
   --timeout 10 
 ```   
 
-### getMoversData lambda function creation from AWS CLI
-Same basic lambda creation and updates as above. 
-Test:
+### getMoversData lambda function 
+Created and updated this lambda function the same way as dailyTableUpdate lambda. 
+Testing:
 ```
 aws lambda invoke \
   --function-name getMoversData \
   output.json
 ```
 
-### Add API Gateway
+#### Add API Gateway
+No API key required to access movers data. 
+Note: API ID is not secret. ID =/= key, ID is part of the URLs.
 ```
 aws apigatewayv2 create-api \
   --name movers-api \
@@ -150,10 +154,10 @@ curl https://cbvbq2ei92.execute-api.us-west-2.amazonaws.com/prod/movers
 ```
 
 ### Frontend with Amplify
-After initializing Vite app and writing the code. 
+After initializing Vite app and writing the code, I deployed it.
 
 Typically, I would put the frontend in its own repo, rather than in this one. Because I put it in this, I ran 
-into some issues with the Github-connected CI/CD deployment I was originall planning. 
+into some issues with the Github-connected CI/CD deployment I was originally planning. 
 I worked around it by manually deploying it:
 
 ```
@@ -186,7 +190,7 @@ aws amplify get-app --app-id dr1sswvxg7ibm
 App can be accessed at https://main.dr1sswvxg7ibm.amplifyapp.com/
 
 
-## Event Bridge
+### Event Bridge
 Schedule the lambda function to be called to get the previous day's data at 3AM PST that day. 
 ```
 aws iam create-role \
