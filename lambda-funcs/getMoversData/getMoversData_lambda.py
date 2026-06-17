@@ -1,19 +1,27 @@
 import json
 import boto3
 from datetime import datetime, timedelta, timezone
+from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table("StockChangeDailyData")
 
-def get_last_business_days(n=7):
-    #TODO: consider government holiday business days, etc, 
-    # as well as whether or not the current day has info yet.
-    days = []
+#Assuming only business days available
+def get_last_n_available_days(n=7):
     d = datetime.now(timezone.utc).date()
+    days = []
 
     while len(days) < n:
-        if d.weekday() < 5:
-            days.append(d.strftime("%Y-%m-%d"))
+        key = d.strftime("%Y-%m-%d")
+
+        response = table.query(
+            KeyConditionExpression=Key("date").eq(key),
+            Limit=1
+        )
+
+        if response.get("Items"):
+            days.append(key)
+
         d -= timedelta(days=1)
 
     return days
@@ -31,7 +39,7 @@ def fetch_data(dates):
     return results
 
 def getMoversData_handler(event, context):
-    dates = get_last_business_days(7)
+    dates = get_last_n_available_days(7)
     data = fetch_data(dates)
 
     return {
