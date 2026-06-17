@@ -148,3 +148,39 @@ aws apigatewayv2 get-api \
 
 curl https://cbvbq2ei92.execute-api.us-west-2.amazonaws.com/prod/movers
 ```
+
+### Frontend with Amplify
+After initializing Vite app and writing the code. 
+
+Typically, I would put the frontend in its own repo, rather than in this one. Because I put it in this, I ran 
+into some issues with the Github-connected CI/CD deployment I was originall planning. 
+I worked around it by manually deploying it:
+
+```
+aws amplify create-app \
+  --name stock-movers
+
+aws amplify create-branch \
+  --app-id dr1sswvxg7ibm \
+  --branch-name main
+
+aws amplify create-deployment \
+  --app-id dr1sswvxg7ibm \
+  --branch-name main
+
+cd frontend/dist
+zip -r ../dist.zip .
+
+cd ..
+curl -X PUT "<zip upload URL>" \
+  --upload-file dist.zip
+  
+aws amplify start-deployment \
+  --app-id dr1sswvxg7ibm \
+  --branch-name main \
+  --job-id 1
+
+aws amplify get-app --app-id dr1sswvxg7ibm
+```
+
+App can be accessed at https://main.dr1sswvxg7ibm.amplifyapp.com/
