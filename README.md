@@ -184,3 +184,27 @@ aws amplify get-app --app-id dr1sswvxg7ibm
 ```
 
 App can be accessed at https://main.dr1sswvxg7ibm.amplifyapp.com/
+
+
+## Event Bridge
+Schedule the lambda function to be called to get the previous day's data at 3AM PST that day. 
+```
+aws iam create-role \
+  --role-name dailyTableUpdate-scheduler \
+  --assume-role-policy-document file://scheduler-policy.json
+  
+aws iam attach-role-policy \
+  --role-name dailyTableUpdate-scheduler \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+  
+aws scheduler create-schedule \
+  --name daily-stock-job \
+  --schedule-expression "cron(0 3 * * ? *)" \
+  --schedule-expression-timezone "America/Los_Angeles" \
+  --flexible-time-window Mode=OFF \
+  --target "{
+    \"Arn\": \"arn:aws:lambda:us-west-2:<ACCOUNT ID>:function:dailyTableUpdate\",
+    \"RoleArn\": \"arn:aws:iam::<ACCOUNT ID>:role/dailyTableUpdate-scheduler\",
+    \"Input\": \"{}\"
+  }"
+```
